@@ -1,0 +1,28 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "032c53dc-2289-4178-b37e-e54ffd84d11b",
+  "alias": "CancelWithdrawalFormWebPart",
+  "componentType": "WebPart",
+  "version": "*",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "supportedHosts": [
+    "SharePointWebPart",
+    "TeamsPersonalApp",
+    "TeamsTab",
+    "SharePointFullPage"
+  ],
+  "supportsThemeVariants": true,
+  "preconfiguredEntries": [
+    {
+      "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
+      "group": { "default": "Advanced" },
+      "title": { "default": "CancelWithdrawalForm" },
+      "description": { "default": "CancelWithdrawalForm description" },
+      "officeFabricIconFontName": "Page",
+      "properties": {
+        "description": "CancelWithdrawalForm"
+      }
+    }
+  ]
+}
