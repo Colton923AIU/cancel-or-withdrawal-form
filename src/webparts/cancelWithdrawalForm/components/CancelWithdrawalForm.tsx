@@ -4,7 +4,7 @@ import { useData } from "../hooks";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { PrimaryButton } from "@fluentui/react";
+import { PrimaryButton, Text } from "@fluentui/react";
 import ControlledDatePicker from "../controlledFields/ControlledDatePicker/ControlledDatePicker";
 import ControlledDropdown from "../controlledFields/ControlledDropdown/ControlledDropdown";
 import ControlledPeoplePicker from "../controlledFields/ControlledPeoplePicker/ControlledPeoplePicker";
@@ -12,6 +12,7 @@ import ControlledTextField from "../controlledFields/ControlledTextField/Control
 import { SPHttpClient } from "@microsoft/sp-http";
 import getUserIdByemail from "../helpers/getUserByEmail/getUserByEmail";
 import { ICancelWithdrawalFormWebPartProps } from "../CancelWithdrawalFormWebPart";
+import Intersection from "./Intersection/Intersection";
 
 const schema = yup.object({
   AA_x002f_FAAdvisor: yup.array().required("AAFA Advisor is required"),
@@ -27,11 +28,31 @@ const schema = yup.object({
     .min(2, "Full Name Required")
     .required("Student Name required"),
   StartDate: yup.date().required("Start Date Required"),
+  ReasonforCancel: yup.string().when("CorW", {
+    is: (val: string) => val === "Cancel",
+    then: () => yup.string().required("Reason for Cancel Required (Cancel)"),
+    otherwise: () => yup.string().notRequired(),
+  }),
+  CancelReasonNote: yup.string().when("CorW", {
+    is: (val: string) => val === "Cancel",
+    then: () => yup.string().required("Cancel Reason Note Required (Cancel)"),
+    otherwise: () => yup.string().notRequired(),
+  }),
+  StudentStatus: yup.string().when("CorW", {
+    is: (val: string) => val === "Cancel",
+    then: () =>
+      yup.string().required("Student Status Cancel Required (Cancel)"),
+    otherwise: () => yup.string().notRequired(),
+  }),
+  LastContact: yup.date().when("CorW", {
+    is: (val: string) => val === "Cancel",
+    then: () => yup.date().required("Last Contact Required (Cancel)"),
+    otherwise: () => yup.date().notRequired(),
+  }),
   Notes: yup.string().when("CorW", {
     is: (val: string) => val === "Withdrawal",
     then: () => yup.string().required("Notes Required (Withdrawal)"),
   }),
-
   DocumentedInNotes: yup.string().when("CorW", {
     is: (val: string) => val === "Withdrawal",
     then: () => yup.string().required("Required (Withdrawal)"),
@@ -78,66 +99,75 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
     reValidateMode: "onBlur",
     mode: "all",
   });
+
+  const submitter = async (data: any) => {
+    if (!userData || !data) return;
+    const CDOA = userData.filter((item) => {
+      if (item.CDOA.Id === parseInt(data.CDOA)) {
+        return true;
+      }
+    })[0].CDOA;
+    const DSM = userData.filter((item) => {
+      if (item.DSM.Title === data.DSM) {
+        return true;
+      }
+    })[0].DSM;
+    const validData: any = data;
+    validData.CDOANameId = CDOA.Id;
+    validData.CDSMId = DSM.Id;
+    validData.StudentID = data.StudentID;
+    const ret = await getUserIdByemail({
+      spHttpClient: spHttpClient,
+      email: data.AA_x002f_FAAdvisor[0].secondaryText,
+      formList: formList,
+    })
+      .then((data) => {
+        return data.Id;
+      })
+      .catch((e) => {
+        console.log("error: ", e);
+        return null;
+      });
+    validData.AA_x002f_FAAdvisorId = ret;
+
+    delete validData.CDOA;
+    delete validData.DSM;
+    delete validData.AA_x002f_FAAdvisor;
+    spHttpClient
+      .post(formList, SPHttpClient.configurations.v1, {
+        body: JSON.stringify(validData),
+      })
+      .then((response: any) => {
+        if (!response.ok) {
+          return response.json().then((err: any) => {
+            throw new Error(JSON.stringify(err));
+          });
+        }
+        return response.json();
+      })
+      .then((data: any) => {
+        setSubmitted(true);
+      })
+      .catch((error: any) => {
+        setSubmitted(false);
+        console.log("Fail:", error);
+      });
+  };
+
   if (userData === null) return <>loading...</>;
 
   return (
     <section className={styles.cwform}>
-      <h2>{submitted ? "Submitted" : "Cancel / Withdrawal Form"}</h2>
+      <Intersection>
+        <Text>
+          {submitted
+            ? "Submitted"
+            : `${watch("CorW") ?? "Cancel/Withdrawal"} Form`}
+        </Text>
+      </Intersection>
       <form
         className={submitted ? styles.hidden : styles.visible}
-        onSubmit={handleSubmit(async (data: any) => {
-          if (!userData) return;
-          const CDOA = userData.filter((item) => {
-            if (item.CDOA.Id === parseInt(data.CDOA)) {
-              return true;
-            }
-          })[0].CDOA;
-          const DSM = userData.filter((item) => {
-            if (item.DSM.Title === data.DSM) {
-              return true;
-            }
-          })[0].DSM;
-          const validData: any = data;
-          validData.CDOANameId = CDOA.Id;
-          validData.CDSMId = DSM.Id;
-          validData.StudentID = data.StudentID;
-          const ret = await getUserIdByemail({
-            spHttpClient: spHttpClient,
-            email: data.AA_x002f_FAAdvisor[0].secondaryText,
-            formList: formList,
-          })
-            .then((data) => {
-              return data.Id;
-            })
-            .catch((e) => {
-              console.log("error: ", e);
-              return null;
-            });
-          validData.AA_x002f_FAAdvisorId = ret;
-
-          delete validData.CDOA;
-          delete validData.DSM;
-          delete validData.AA_x002f_FAAdvisor;
-          spHttpClient
-            .post(formList, SPHttpClient.configurations.v1, {
-              body: JSON.stringify(validData),
-            })
-            .then((response: any) => {
-              if (!response.ok) {
-                return response.json().then((err: any) => {
-                  throw new Error(JSON.stringify(err));
-                });
-              }
-              return response.json();
-            })
-            .then((data: any) => {
-              setSubmitted(true);
-            })
-            .catch((error: any) => {
-              setSubmitted(false);
-              console.log("Fail:", error);
-            });
-        })}
+        onSubmit={handleSubmit(submitter)}
       >
         <ControlledDropdown
           errorMessage={errors.CorW?.message}
@@ -207,7 +237,36 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
               ]}
             />
           </>
-        ) : null}
+        ) : (
+          <>
+            <ControlledDatePicker
+              control={control}
+              name="LastContact"
+              label="Last Contact"
+            />
+            <ControlledTextField
+              errorMessage={errors.StudentStatus?.message}
+              control={control}
+              name="StudentStatus"
+              label="Student Status"
+              type="text"
+            />
+            <ControlledTextField
+              errorMessage={errors.ReasonforCancel?.message}
+              control={control}
+              name="ReasonforCancel"
+              label="Reason for Cancel"
+              type="text"
+            />
+            <ControlledTextField
+              errorMessage={errors.CancelReasonNote?.message}
+              control={control}
+              name="CancelReasonNote"
+              label="Cancel Reason Note"
+              type="text"
+            />
+          </>
+        )}
         <ControlledPeoplePicker
           errorMessage={errors.AA_x002f_FAAdvisor?.message}
           control={control}

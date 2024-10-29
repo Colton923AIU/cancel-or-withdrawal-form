@@ -13,7 +13,7 @@ declare interface ICancelWithdrawalFormWebPartStrings {
   UnknownEnvironment: string;
 }
 
-declare module 'CancelWithdrawalFormWebPartStrings' {
+declare module "CancelWithdrawalFormWebPartStrings" {
   const strings: ICancelWithdrawalFormWebPartStrings;
   export = strings;
 }

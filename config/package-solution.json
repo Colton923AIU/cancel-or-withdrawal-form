@@ -3,7 +3,7 @@
   "solution": {
     "name": "corw-client-side-solution",
     "id": "6b232820-82b7-4321-b28c-5beaa8cfb3ce",
-    "version": "1.0.0.0",
+    "version": "1.0.0.1",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
@@ -35,6 +35,6 @@
     ]
   },
   "paths": {
-    "zippedPackage": "solution/corw.sppkg"
+    "zippedPackage": "solution/corw-7.sppkg"
   }
 }

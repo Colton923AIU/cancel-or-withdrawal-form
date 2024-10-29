@@ -1,0 +1,30 @@
+.visible {
+  opacity: 0;
+  animation: FadeIn 0.4s ease-in both;
+}
+
+.hidden {
+  opacity: 1;
+  animation: FadeOut 0.6s ease-in both;
+}
+
+@keyframes FadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes FadeOut {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

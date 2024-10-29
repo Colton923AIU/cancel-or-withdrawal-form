@@ -16,12 +16,16 @@ export interface ICancelWithdrawalFormWebPartProps {
   absoluteUrl: string;
   context: IPeoplePickerContext;
   spHttpClient: SPHttpClient;
-  cdoaToDSMListURL: string;
-  formList: string;
+  cdoaToDSMListURL: "https://livecareered.sharepoint.com/sites/Forms/Lists/CDOA%20to%20DSM%20Map/AllItems.aspx";
+  formList: `https://livecareered.sharepoint.com/sites/Forms/_api/web/Lists/getbytitle('Cancel%20or%20Withdrawal%20Request%20Form%20Test')/items`;
 }
 
 export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<ICancelWithdrawalFormWebPartProps> {
   public render(): void {
+    const list1 =
+      "https://livecareered.sharepoint.com/sites/Forms/Lists/CDOA%20to%20DSM%20Map/AllItems.aspx";
+    const list2 =
+      "https://livecareered.sharepoint.com/sites/Forms/_api/web/Lists/getbytitle('Cancel%20or%20Withdrawal%20Request%20Form%20Test')/items";
     const element: React.ReactElement<ICancelWithdrawalFormWebPartProps> =
       React.createElement(CancelWithdrawalForm, {
         absoluteUrl: this.context.pageContext.web.absoluteUrl,
@@ -31,8 +35,8 @@ export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<I
           msGraphClientFactory: this.context.msGraphClientFactory,
           spHttpClient: this.context.spHttpClient,
         },
-        cdoaToDSMListURL: `https://livecareered.sharepoint.com/sites/AIU/Lists/CDOA%20to%20DSM%20Map/AllItems.aspx`,
-        formList: `https://livecareered.sharepoint.com/sites/Forms/_api/web/Lists/getbytitle('Cancel%20or%20Withdrawal%20Request%20Form%20Test')/items`,
+        cdoaToDSMListURL: list1,
+        formList: list2,
       });
 
     ReactDom.render(element, this.domElement);

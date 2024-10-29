@@ -90,7 +90,7 @@ const useData: ({
           stopFetching.current = true;
         });
       };
-      asyncPromise();
+      void asyncPromise();
     }
   }, [cdoaToDSMList]);
 

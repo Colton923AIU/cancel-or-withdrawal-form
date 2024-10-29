@@ -1,6 +1,7 @@
-import * as React from 'react';
-import { Controller } from 'react-hook-form';
-import { DatePicker, DayOfWeek } from '@fluentui/react';
+import * as React from "react";
+import { Controller } from "react-hook-form";
+import { DatePicker, DayOfWeek } from "@fluentui/react";
+import Intersection from "../../components/Intersection/Intersection";
 
 interface ControlledDatePickerProps {
   name: string;
@@ -16,7 +17,7 @@ const ControlledDatePicker: React.FC<ControlledDatePickerProps> = ({
   errorMessage,
 }) => {
   return (
-    <>
+    <Intersection>
       {errorMessage ? <p>{errorMessage}</p> : null}
       <Controller
         name={name}
@@ -26,12 +27,12 @@ const ControlledDatePicker: React.FC<ControlledDatePickerProps> = ({
             label={label}
             firstDayOfWeek={DayOfWeek.Sunday}
             placeholder="Select a date..."
-            onSelectDate={date => field.onChange(date)}
+            onSelectDate={(date) => field.onChange(date)}
             value={field.value}
           />
         )}
       />
-    </>
+    </Intersection>
   );
 };
 
