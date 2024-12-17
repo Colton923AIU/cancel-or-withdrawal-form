@@ -51,7 +51,22 @@ const schema = yup.object({
   }),
   Notes: yup.string().when("CorW", {
     is: (val: string) => val === "Withdrawal",
-    then: () => yup.string().required("Notes Required (Withdrawal)"),
+    then: () =>
+      yup.string().when("WithdrawalRequestWritten", {
+        is: (val: string) => val === "Yes",
+        then: () => yup.string().required("Notes Required (Withdrawal)"),
+        otherwise: () =>
+          yup
+            .string()
+            .test(
+              "invalid-withdrawal",
+              "The withdrawal must be in writing. You cannot complete this form.",
+              function (value) {
+                return false;
+              }
+            ),
+      }),
+    otherwise: () => yup.string().notRequired(),
   }),
   DocumentedInNotes: yup.string().when("CorW", {
     is: (val: string) => val === "Withdrawal",
@@ -61,6 +76,25 @@ const schema = yup.object({
   InstructorName: yup.string().when("CorW", {
     is: (val: string) => val === "Withdrawal",
     then: () => yup.string().required("Instructor Name Required (Withdrawal)"),
+    otherwise: () => yup.string().notRequired(),
+  }),
+  WithdrawalRequestWritten: yup.string().when("ESA", {
+    is: (val: string) => val === "No",
+    then: () =>
+      yup
+        .string()
+        .oneOf(["Yes", "No"], "Was the request received in writing?")
+        .required("Please specify Yes or No")
+        .test(
+          "is-not-no",
+          "Response cannot be No",
+          (val: string) => val === "Yes"
+        ),
+    otherwise: () => yup.string().notRequired(),
+  }),
+  WithdrawalRequestDate: yup.date().when("ESA", {
+    is: (val: string) => val === "No",
+    then: () => yup.string().required(),
     otherwise: () => yup.string().notRequired(),
   }),
   ESA: yup.string().when("CorW", {
@@ -80,27 +114,42 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
   spHttpClient,
 }) => {
   const [submitted, setSubmitted] = React.useState<boolean>(false);
+  const [CorW, setCorW] = React.useState<boolean | null>(null);
+  const [WithdrawalRequestWritten, setWithdrawalRequestWritten] =
+    React.useState<boolean>(false);
+  const [ESA, setESA] = React.useState<boolean>(false);
   const userData = useData({
     absoluteUrl: absoluteUrl,
     spHttpClient: spHttpClient,
     spListLink: cdoaToDSMListURL,
   });
   const {
-    watch,
     setValue,
     handleSubmit,
     formState: { errors },
+    setError,
     control,
+    setFocus,
+    clearErrors,
   } = useForm<FormFields>({
     resolver: yupResolver(schema),
     defaultValues: {
       StartDate: new Date(),
+      WithdrawalRequestDate: new Date(),
     },
     reValidateMode: "onBlur",
     mode: "all",
   });
 
   const submitter = async (data: any) => {
+    if (errors) {
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        setFocus(firstErrorField as any);
+      }
+      return;
+    }
+
     if (!userData || !data) return;
     const CDOA = userData.filter((item) => {
       if (item.CDOA.Id === parseInt(data.CDOA)) {
@@ -133,6 +182,8 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
     delete validData.CDOA;
     delete validData.DSM;
     delete validData.AA_x002f_FAAdvisor;
+    delete validData.WithdrawalRequestWritten;
+
     spHttpClient
       .post(formList, SPHttpClient.configurations.v1, {
         body: JSON.stringify(validData),
@@ -154,16 +205,34 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
       });
   };
 
-  if (userData === null) return <>loading...</>;
+  if (userData === null) {
+    return (
+      <div className={styles.load}>
+        <div className={styles.loader} />
+      </div>
+    );
+  }
 
   return (
     <section className={styles.cwform}>
       <Intersection>
-        <Text>
-          {submitted
-            ? "Submitted"
-            : `${watch("CorW") ?? "Cancel/Withdrawal"} Form`}
-        </Text>
+        <div
+          style={{
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Text variant="mediumPlus" style={{ textAlign: "center" }}>
+            {submitted
+              ? "Submitted"
+              : CorW === null
+              ? "Cancel / Withdrawal Form"
+              : CorW
+              ? "Withdrawal Form"
+              : "Cancel Form"}
+          </Text>
+        </div>
       </Intersection>
       <form
         className={submitted ? styles.hidden : styles.visible}
@@ -180,6 +249,11 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
           ]}
           onChange={(option) => {
             setValue("CorW", option);
+            if (option === "Withdrawal") {
+              setCorW(true);
+            } else {
+              setCorW(false);
+            }
           }}
         />
         <ControlledTextField
@@ -200,15 +274,8 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
           name="StartDate"
           label="Current Start Date"
         />
-        {watch("CorW") === "Withdrawal" ? (
-          <>
-            <ControlledTextField
-              errorMessage={errors.Notes?.message}
-              control={control}
-              name="Notes"
-              label="Student's Exact Written Request"
-              type="text"
-            />
+        {CorW ? (
+          <div>
             <ControlledDropdown
               errorMessage={errors.DocumentedInNotes?.message}
               control={control}
@@ -232,13 +299,66 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
               name="ESA"
               label="ESA"
               options={[
-                { key: "yes", text: "Yes" },
-                { key: "no", text: "No" },
+                { key: "Yes", text: "Yes" },
+                { key: "No", text: "No" },
               ]}
+              onChange={(val) => {
+                if (val === "Yes") {
+                  setESA(true);
+                } else {
+                  setESA(false);
+                }
+                setValue("ESA", val);
+              }}
             />
-          </>
+            {!ESA && (
+              <div>
+                <ControlledDropdown
+                  errorMessage={errors.WithdrawalRequestWritten?.message}
+                  control={control}
+                  name="WithdrawalRequestWritten"
+                  label="Was the request received in writing?"
+                  options={[
+                    { key: "Yes", text: "Yes" },
+                    { key: "No", text: "No" },
+                  ]}
+                  onChange={(option) => {
+                    if (option === "No") {
+                      setError("WithdrawalRequestWritten", {
+                        message:
+                          "This form cannot be submitted if the request was not in writing.",
+                      });
+                    }
+                    setValue("WithdrawalRequestWritten", option);
+                    if (option === "Yes") {
+                      setWithdrawalRequestWritten(true);
+                    } else {
+                      setWithdrawalRequestWritten(false);
+                    }
+                  }}
+                />
+                {WithdrawalRequestWritten && (
+                  <div>
+                    <ControlledDatePicker
+                      control={control}
+                      name="WithdrawalRequestDate"
+                      label="Date the written request was received:"
+                    />
+
+                    <ControlledTextField
+                      errorMessage={errors.Notes?.message}
+                      control={control}
+                      name="Notes"
+                      label="Student's Exact Written Request"
+                      type="text"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         ) : (
-          <>
+          <div>
             <ControlledDatePicker
               control={control}
               name="LastContact"
@@ -265,7 +385,7 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
               label="Cancel Reason Note"
               type="text"
             />
-          </>
+          </div>
         )}
         <ControlledPeoplePicker
           errorMessage={errors.AA_x002f_FAAdvisor?.message}
@@ -292,6 +412,9 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
                 return true;
               }
             })[0].DSM.Title;
+            if (errors.DSM) {
+              clearErrors("DSM");
+            }
             setValue("DSM", DSMValue);
           }}
         />
@@ -303,11 +426,13 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
           type="text"
           disabled={true} // Set to true or false based on your requirements
         />
-        <PrimaryButton
-          type="submit"
-          text="Submit"
-          style={{ marginTop: "5px" }}
-        />
+        <Intersection>
+          <PrimaryButton
+            type="submit"
+            text="Submit"
+            style={{ marginTop: "5px" }}
+          />
+        </Intersection>
       </form>
     </section>
   );

@@ -27,7 +27,7 @@ const ControlledPeoplePicker: React.FC<ControlledPeoplePickerProps> = ({
   titleText,
   personSelectionLimit = 1,
   disabled = false,
-  showTooltip = true,
+  showTooltip = false,
   searchTextLimit = 5,
 }) => {
   return (
