@@ -16,16 +16,15 @@ export interface ICancelWithdrawalFormWebPartProps {
   absoluteUrl: string;
   context: IPeoplePickerContext;
   spHttpClient: SPHttpClient;
-  cdoaToDSMListURL: "https://livecareered.sharepoint.com/sites/Forms/Lists/CDOA%20to%20DSM%20Map/AllItems.aspx";
-  formList: `https://livecareered.sharepoint.com/sites/Forms/_api/web/Lists/getbytitle('Cancel%20or%20Withdrawal%20Request%20Form%20Test')/items`;
+  cdoaToDSMListURL: string;
+  formList: string;
 }
 
 export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<ICancelWithdrawalFormWebPartProps> {
   public render(): void {
-    const list1 =
-      "https://livecareered.sharepoint.com/sites/Forms/Lists/CDOA%20to%20DSM%20Map/AllItems.aspx";
-    const list2 =
-      "https://livecareered.sharepoint.com/sites/Forms/_api/web/Lists/getbytitle('Cancel%20or%20Withdrawal%20Request%20Form%20Test')/items";
+    // "https://livecareered.sharepoint.com/sites/Forms/Lists/CDOA%20to%20DSM%20Map/AllItems.aspx";
+    // "https://livecareered.sharepoint.com/sites/Forms/_api/web/Lists(guid'94A734FD-3047-4D2A-B3B3-9CC591E017A2')/items";
+
     const element: React.ReactElement<ICancelWithdrawalFormWebPartProps> =
       React.createElement(CancelWithdrawalForm, {
         absoluteUrl: this.context.pageContext.web.absoluteUrl,
@@ -35,8 +34,8 @@ export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<I
           msGraphClientFactory: this.context.msGraphClientFactory,
           spHttpClient: this.context.spHttpClient,
         },
-        cdoaToDSMListURL: list1,
-        formList: list2,
+        cdoaToDSMListURL: this.properties.cdoaToDSMListURL,
+        formList: this.properties.formList,
       });
 
     ReactDom.render(element, this.domElement);
@@ -61,8 +60,11 @@ export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<I
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField("description", {
-                  label: strings.DescriptionFieldLabel,
+                PropertyPaneTextField("cdoaToDSMListURL", {
+                  label: "CDOA to DSM Map Link",
+                }),
+                PropertyPaneTextField("formList", {
+                  label: "Data List Link",
                 }),
               ],
             },
@@ -70,5 +72,8 @@ export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<I
         },
       ],
     };
+  }
+  protected get disableReactivePropertyChanges(): boolean {
+    return true;
   }
 }

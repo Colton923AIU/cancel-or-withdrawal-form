@@ -140,17 +140,25 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
     reValidateMode: "onBlur",
     mode: "all",
   });
+  function formatToCustomISOString(date: Date): string {
+    const isoString = date.toISOString(); // Generates: "2025-01-31T06:00:00.000Z"
+    const [datePart, timePart] = isoString.split("T");
+    const [time] = timePart.split(".");
+    const fractionalSeconds = (date.getMilliseconds() * 1000).toString();
+
+    // Manually ensure 7 digits for fractional seconds
+    const fullFractionalSeconds =
+      fractionalSeconds + "0000000".slice(fractionalSeconds.length);
+
+    return `${datePart}T${time}.${fullFractionalSeconds}Z`;
+  }
 
   const submitter = async (data: any) => {
-    if (errors) {
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        setFocus(firstErrorField as any);
-      }
-      return;
-    }
-
+    console.log("userData: ", userData);
+    console.log("data: ", data);
+    console.log("submitting");
     if (!userData || !data) return;
+    console.log("still submitting");
     const CDOA = userData.filter((item) => {
       if (item.CDOA.Id === parseInt(data.CDOA)) {
         return true;
@@ -175,6 +183,13 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
       })
       .catch((e) => {
         console.log("error: ", e);
+        if (errors) {
+          const firstErrorField = Object.keys(errors)[0];
+          if (firstErrorField) {
+            setFocus(firstErrorField as any);
+          }
+          return;
+        }
         return null;
       });
     validData.AA_x002f_FAAdvisorId = ret;
@@ -183,8 +198,17 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
     delete validData.DSM;
     delete validData.AA_x002f_FAAdvisor;
     delete validData.WithdrawalRequestWritten;
-
-    spHttpClient
+    // 2024-04-15T10:30:09.7552052Z
+    validData.LastContact = formatToCustomISOString(
+      new Date(validData.LastContact)
+    );
+    validData.StartDate = formatToCustomISOString(
+      new Date(validData.StartDate)
+    );
+    validData.WithdrawalRequestDate = formatToCustomISOString(
+      new Date(validData.WithdrawalRequestDate)
+    );
+    await spHttpClient
       .post(formList, SPHttpClient.configurations.v1, {
         body: JSON.stringify(validData),
       })
