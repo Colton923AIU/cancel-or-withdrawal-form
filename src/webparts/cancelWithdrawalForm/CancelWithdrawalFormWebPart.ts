@@ -22,9 +22,6 @@ export interface ICancelWithdrawalFormWebPartProps {
 
 export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<ICancelWithdrawalFormWebPartProps> {
   public render(): void {
-    // "https://livecareered.sharepoint.com/sites/Forms/Lists/CDOA%20to%20DSM%20Map/AllItems.aspx";
-    // "https://livecareered.sharepoint.com/sites/Forms/_api/web/Lists(guid'94A734FD-3047-4D2A-B3B3-9CC591E017A2')/items";
-
     const element: React.ReactElement<ICancelWithdrawalFormWebPartProps> =
       React.createElement(CancelWithdrawalForm, {
         absoluteUrl: this.context.pageContext.web.absoluteUrl,

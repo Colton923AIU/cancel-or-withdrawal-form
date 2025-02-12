@@ -10,7 +10,8 @@
     "build": "gulp bundle",
     "clean": "gulp clean",
     "test": "gulp test",
-    "pack": "gulp clean && gulp build && gulp build --ship && gulp bundle && gulp package-solution --ship"
+    "ship": "gulp clean && gulp bundle && ..\\..\\scripts\\version.bat && gulp package-solution --ship && ..\\..\\scripts\\push.bat && echo Complete",
+    "serve": "fast-serve"
   },
   "dependencies": {
     "tslib": "2.3.1",
@@ -42,6 +43,7 @@
     "@types/react": "17.0.45",
     "@types/react-dom": "17.0.17",
     "eslint-plugin-react-hooks": "4.3.0",
-    "@microsoft/sp-module-interfaces": "1.20.1"
+    "@microsoft/sp-module-interfaces": "1.20.1",
+    "spfx-fast-serve-helpers": "~1.19.0"
   }
 }
