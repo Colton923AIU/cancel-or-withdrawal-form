@@ -10,7 +10,7 @@
     "build": "gulp bundle",
     "clean": "gulp clean",
     "test": "gulp test",
-    "ship": "gulp clean && gulp bundle && ..\\..\\scripts\\version.bat && gulp package-solution --ship && ..\\..\\scripts\\push.bat && echo Complete",
+    "ship": "gulp clean && gulp bundle && ..\\..\\scripts\\version.bat && gulp package-solution --ship && ..\\..\\scripts\\push.bat %* && echo Complete",
     "serve": "fast-serve"
   },
   "dependencies": {

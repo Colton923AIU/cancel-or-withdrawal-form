@@ -3,7 +3,13 @@ import { SPHttpClient } from "@microsoft/sp-http";
 type TgetUserIdByemail = {
   spHttpClient: SPHttpClient;
   email: string;
-  formList: string;
+  formListTitle: string;
+  absoluteUrl: string;
+};
+
+// Helper function to build SharePoint list URL from site URL and list title
+const buildListUrl = (siteUrl: string, listTitle: string): string => {
+  return `${siteUrl}/Lists/${listTitle}/AllItems.aspx`;
 };
 
 // Define the expected response structure more precisely
@@ -16,20 +22,22 @@ type User = {
 const getUserIdByemail = async ({
   spHttpClient,
   email,
-  formList,
+  formListTitle,
+  absoluteUrl,
 }: TgetUserIdByemail): Promise<User> => {
   // Ensure email is URL-encoded
   const encodedEmail = encodeURIComponent(email);
-  const basePath = new URL(formList).origin;
-  const subsites = formList.split("Lists")[0].split("com")[1];
-  const listUrl =
+  const listUrl = buildListUrl(absoluteUrl, formListTitle);
+  const basePath = new URL(listUrl).origin;
+  const subsites = listUrl.split("Lists")[0].split("com")[1];
+  const listApiUrl =
     basePath +
     subsites +
     `_api/web/siteusers?$filter=Email%20eq%20'${encodedEmail}'`;
 
   try {
     const response = await spHttpClient.get(
-      listUrl,
+      listApiUrl,
       SPHttpClient.configurations.v1
     );
 

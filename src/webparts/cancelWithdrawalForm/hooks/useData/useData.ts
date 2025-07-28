@@ -12,7 +12,12 @@ type TCDOAtoDSMListItem = {
 type TUseDataProps = {
   absoluteUrl: string;
   spHttpClient: SPHttpClient;
-  spListLink: string;
+  spListTitle: string;
+};
+
+// Helper function to build SharePoint list URL from site URL and list title
+const buildListUrl = (siteUrl: string, listTitle: string): string => {
+  return `${siteUrl}/Lists/${listTitle}/AllItems.aspx`;
 };
 
 type TUserData = {
@@ -40,16 +45,18 @@ type TUserData = {
 const useData: ({
   absoluteUrl,
   spHttpClient,
-  spListLink,
-}: TUseDataProps) => { CDOA: TUserData; DSM: TUserData }[] | null = ({
+  spListTitle,
+}: TUseDataProps) => { CDOA: TUserData; DSM: TUserData }[] | undefined = ({
   absoluteUrl,
   spHttpClient,
-  spListLink,
+  spListTitle,
 }: TUseDataProps) => {
+  const listUrl = buildListUrl(absoluteUrl, spListTitle);
+  
   const cdoaToDSMList = useSharePointList({
     absoluteUrl: absoluteUrl,
     client: spHttpClient,
-    spListLink: spListLink,
+    spListLink: listUrl,
   })?.map((item) => {
     return {
       CDOAId: item.CDOAId,
@@ -76,12 +83,12 @@ const useData: ({
               CDOA: (await getUserByID({
                 id: item.CDOAId.toString(),
                 spHttpClient: spHttpClient,
-                url: spListLink,
+                url: listUrl,
               })) as TUserData,
               DSM: (await getUserByID({
                 id: item.DSMId.toString(),
                 spHttpClient: spHttpClient,
-                url: spListLink,
+                url: listUrl,
               })) as TUserData,
             };
           })
@@ -90,12 +97,13 @@ const useData: ({
           stopFetching.current = true;
         });
       };
+      // eslint-disable-next-line no-void
       void asyncPromise();
     }
   }, [cdoaToDSMList]);
 
   if (resolvedData.length === 0) {
-    return null;
+    return undefined;
   }
   return resolvedData;
 };

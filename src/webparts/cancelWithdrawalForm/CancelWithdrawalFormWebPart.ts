@@ -16,8 +16,8 @@ export interface ICancelWithdrawalFormWebPartProps {
   absoluteUrl: string;
   context: IPeoplePickerContext;
   spHttpClient: SPHttpClient;
-  cdoaToDSMListURL: string;
-  formList: string;
+  cdoaToDSMListTitle: string;
+  formListTitle: string;
 }
 
 export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<ICancelWithdrawalFormWebPartProps> {
@@ -31,8 +31,8 @@ export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<I
           msGraphClientFactory: this.context.msGraphClientFactory,
           spHttpClient: this.context.spHttpClient,
         },
-        cdoaToDSMListURL: this.properties.cdoaToDSMListURL,
-        formList: this.properties.formList,
+        cdoaToDSMListTitle: this.properties.cdoaToDSMListTitle,
+        formListTitle: this.properties.formListTitle,
       });
 
     ReactDom.render(element, this.domElement);
@@ -57,11 +57,13 @@ export default class CancelWithdrawalFormWebPart extends BaseClientSideWebPart<I
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField("cdoaToDSMListURL", {
-                  label: "CDOA to DSM Map Link",
+                PropertyPaneTextField("cdoaToDSMListTitle", {
+                  label: "CDOA to DSM Map List Title",
+                  description: "Enter the exact list title (e.g. 'CDOA to DSM Map')"
                 }),
-                PropertyPaneTextField("formList", {
-                  label: "Data List Link",
+                PropertyPaneTextField("formListTitle", {
+                  label: "Data List Title", 
+                  description: "Enter the exact list title (e.g. 'Cancel Withdrawal Request Form')"
                 }),
               ],
             },

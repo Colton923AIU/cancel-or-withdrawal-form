@@ -10,6 +10,8 @@ interface ControlledTextFieldProps {
   errorMessage?: string;
   type?: "text" | "number";
   disabled?: boolean; // Add disabled prop
+  multiline?: boolean;
+  maxLength?: number;
 }
 
 const ControlledTextField: React.FC<ControlledTextFieldProps> = ({
@@ -19,6 +21,8 @@ const ControlledTextField: React.FC<ControlledTextFieldProps> = ({
   errorMessage,
   type = "text",
   disabled = false, // Default to false if not provided
+  multiline = false,
+  maxLength,
 }) => {
   return (
     <Intersection>
@@ -33,6 +37,8 @@ const ControlledTextField: React.FC<ControlledTextFieldProps> = ({
             value={field.value || ""}
             errorMessage={errorMessage}
             disabled={disabled} // Pass the disabled prop to TextField
+            multiline={multiline}
+            maxLength={maxLength}
           />
         )}
       />

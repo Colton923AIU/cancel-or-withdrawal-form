@@ -6,7 +6,7 @@ import * as React from "react";
 // Function to parse the SharePoint List link
 export const SPListLinkParser = (link: string): string | undefined => {
   const parts = link.split("/")[link.split("/").indexOf("Lists") + 1];
-  return parts ? parts.replace(/%20/g, " ").split("?")[0] : undefined;
+  return parts ? decodeURIComponent(parts).split("?")[0] : undefined;
 };
 
 // Function to construct the URL for fetching SharePoint list data by title
@@ -34,7 +34,7 @@ export const urlGetByTitle = ({
   return `${basePath}${subsites}_api/web/lists/GetByTitle('${parsedLink}')`;
 };
 
-export type TSPListData = Record<string, string | number | null>[];
+export type TSPListData = Record<string, string | number | undefined>[];
 
 export interface ISPListData {
   client: SPHttpClient; // SP Client for making fetch requests
@@ -85,6 +85,7 @@ const useSharePointList = ({
     };
 
     if (absoluteUrl && spListLink) {
+      // eslint-disable-next-line no-void
       void fetchData();
     }
   }, [absoluteUrl, spListLink, client]);

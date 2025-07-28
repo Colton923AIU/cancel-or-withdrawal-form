@@ -112,6 +112,15 @@ const schema = yup.object({
         .required("Please specify Yes or No"),
     otherwise: () => yup.string().notRequired(),
   }),
+  LDA: yup.string().when("CorW", {
+    is: (val: string) => val === "Withdrawal",
+    then: () =>
+      yup
+        .string()
+        .oneOf(["Yes", "No"], "Please specify Yes or No")
+        .required("Please specify Yes or No"),
+    otherwise: () => yup.string().notRequired(),
+  }),
 });
 
 export default schema;

@@ -20,9 +20,9 @@ interface FormFields extends yup.InferType<typeof schema> {}
 
 const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
   absoluteUrl,
-  cdoaToDSMListURL,
+  cdoaToDSMListTitle,
   context,
-  formList,
+  formListTitle,
   spHttpClient,
 }) => {
   const [submitted, setSubmitted] = React.useState<boolean>(false);
@@ -30,10 +30,11 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
   const [WithdrawalRequestWritten, setWithdrawalRequestWritten] =
     React.useState<boolean>(false);
   const [ESA, setESA] = React.useState<boolean>(false);
+  const [LDA, setLDA] = React.useState<boolean>(false);
   const userData = useData({
     absoluteUrl: absoluteUrl,
     spHttpClient: spHttpClient,
-    spListLink: cdoaToDSMListURL,
+    spListTitle: cdoaToDSMListTitle,
   });
 
   const {
@@ -75,10 +76,17 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
     validData.CDSMId = DSM.Id;
     validData.StudentID = data.StudentID;
 
+    if (LDA) {
+      validData.LDA = "Yes";
+    } else {
+      validData.LDA = "No";
+    }
+
     const ret = await getUserIdByemail({
       spHttpClient: spHttpClient,
       email: data.AA_x002f_FAAdvisor[0].secondaryText,
-      formList: formList,
+      formListTitle: formListTitle,
+      absoluteUrl: absoluteUrl,
     })
       .then((data) => {
         return data.Id;
@@ -113,12 +121,8 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
     validData.LastContact = formatToCustomISOString(
       validData.LastContact ? new Date(validData.LastContact ?? "") : new Date()
     );
-    const basePath = new URL(formList).origin;
-    const sitePath = new URL(formList).pathname.split("/Lists")[0];
-    const listName = formList.split("/Lists/")[1].split("/")[0];
-
-    const postUrl =
-      basePath + sitePath + `/_api/web/lists/getbytitle('${listName}')/items`;
+    
+    const postUrl = `${absoluteUrl}/_api/web/lists/getbytitle('${formListTitle}')/items`;
 
     await spHttpClient
       .post(postUrl, SPHttpClient.configurations.v1, {
@@ -248,6 +252,24 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
                 setValue("ESA", val);
               }}
             />
+            <ControlledDropdown
+              errorMessage={errors.LDA?.message}
+              control={control}
+              name="LDA"
+              label="LDA"
+              options={[
+                { key: "Yes", text: "Yes" },
+                { key: "No", text: "No" },
+              ]}
+              onChange={(val) => {
+                if (val === "Yes") {
+                  setLDA(true);
+                } else {
+                  setLDA(false);
+                }
+                setValue("LDA", val);
+              }}
+            />
             {!ESA && (
               <div>
                 <ControlledDropdown
@@ -287,7 +309,8 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
                       control={control}
                       name="Notes"
                       label="Student's Exact Written Request"
-                      type="text"
+                      multiline
+                      maxLength={63999}
                     />
                   </div>
                 )}
@@ -344,8 +367,9 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
               errorMessage={errors.CancelReasonNote?.message}
               control={control}
               name="CancelReasonNote"
-              label="Cancel Reason Note"
-              type="text"
+              label="Cancel Reason Notes"
+              multiline
+              maxLength={63999}
             />
           </div>
         )}
@@ -354,7 +378,7 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
           control={control}
           name="AA_x002f_FAAdvisor"
           context={context}
-          titleText="Financial Aid Advisor (AA or FA to be notified)"
+          titleText="Financial Aid Advisor or Admissions Advisor to be notified"
           personSelectionLimit={1}
           disabled={false}
           searchTextLimit={5}
@@ -364,27 +388,38 @@ const Cwform: React.FC<ICancelWithdrawalFormWebPartProps> = ({
           control={control}
           name="CDOA"
           label="CDOA Name"
-          options={userData.map((item) => ({
-            key: item.CDOA.Id.toString(),
-            text: item.CDOA.Title,
-          }))}
+          options={
+            userData
+              ? userData
+                  .slice()
+                  .sort((a, b) => a.CDOA.Title.localeCompare(b.CDOA.Title))
+                  .map((item) => ({
+                    key: item.CDOA.Id.toString(),
+                    text: item.CDOA.Title,
+                  }))
+              : []
+          }
+          calloutProps={{ calloutMaxHeight: 200 }}
+          styles={{ dropdown: { width: 300 } }}
           onChange={(val) => {
             const DSMValue = userData?.filter((item) => {
               if (item.CDOA.Id === parseInt(val)) {
                 return true;
               }
-            })[0].DSM.Title;
-            if (errors.DSM) {
-              clearErrors("DSM");
+            })[0]?.DSM.Title;
+            if (DSMValue) {
+              if (errors.DSM) {
+                clearErrors("DSM");
+              }
+              setValue("DSM", DSMValue);
             }
-            setValue("DSM", DSMValue);
           }}
         />
         <ControlledTextField
           errorMessage={errors.DSM?.message}
           control={control}
           name="DSM"
-          label="DSM"
+          label="CDSM"
           type="text"
           disabled={true}
         />

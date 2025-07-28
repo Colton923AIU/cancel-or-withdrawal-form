@@ -10,6 +10,8 @@ interface ControlledDropdownProps {
   options: IDropdownOption[];
   errorMessage?: string;
   onChange?: (value: any) => void;
+  calloutProps?: any;
+  styles?: any;
 }
 
 const ControlledDropdown: React.FC<ControlledDropdownProps> = ({
@@ -19,6 +21,8 @@ const ControlledDropdown: React.FC<ControlledDropdownProps> = ({
   options,
   errorMessage,
   onChange,
+  calloutProps,
+  styles,
 }) => {
   return (
     <Intersection>
@@ -35,6 +39,8 @@ const ControlledDropdown: React.FC<ControlledDropdownProps> = ({
               if (onChange) onChange(option?.key);
             }}
             errorMessage={errorMessage}
+            calloutProps={calloutProps}
+            styles={styles}
           />
         )}
       />
